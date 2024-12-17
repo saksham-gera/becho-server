@@ -14,7 +14,7 @@ app.use(bodyParser.json());
 app.get("/", async(req, res) => {
   res.status(200).json({ status: "Server is running!" });
   const results = await db.query("SELECT * FROM users");
-  console.log(results.rows[0]);
+  res.status(200).json({ results});
 });
 
 
