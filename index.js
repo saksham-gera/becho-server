@@ -10,6 +10,11 @@ const saltRounds = 10;
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+app.get("/", (req, res) => {
+  res.status(200).json({ status: "Server is running!" });
+});
+
+
 app.post("/register", async (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
@@ -40,4 +45,5 @@ app.post("/register", async (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
+  
 });
