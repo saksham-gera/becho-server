@@ -20,27 +20,40 @@ app.get("/", asyncHandler(async (req, res) => {
   res.status(200).json({ status: "Server is running!", results: results.rows });
 }));
 
-app.post("/register", asyncHandler(async (req, res) => {
-  const { username, password } = req.body;
+app.post("/register", async (req, res) => {
+  const username = req.body.username;
+  const password = req.body.password;
+  const email = req.body.email; // Corrected typo
 
-  if (!username || !password) {
-    return res.status(400).json({ success: false, message: "Username and password are required" });
+  try {
+    // Check if username or email already exists
+    const results = await db.query(
+      "SELECT * FROM users WHERE username=$1 OR email=$2",
+      [username, email]
+    );
+
+    if (results.rows.length > 0) {
+      res.json({ success: false, message: "Username or email already exists!" });
+    } else {
+      // Hash the password
+      bcrypt.hash(password, saltRounds, async (err, hash) => {
+        if (err) {
+          res.status(500).json({ success: false, message: "Error hashing password" });
+        } else {
+          // Insert user into the database
+          await db.query(
+            "INSERT INTO users(username, password, email) VALUES ($1, $2, $3) RETURNING *",
+            [username, hash, email]
+          );
+          res.json({ success: true, message: "User registered successfully!" });
+        }
+      });
+    }
+  } catch (err) {
+    console.error("Error registering user:", err);
+    res.status(500).json({ success: false, message: "Registration failed" });
   }
-
-  const userExists = await db.query("SELECT * FROM users WHERE username=$1", [username]);
-
-  if (userExists.rows.length > 0) {
-    return res.status(409).json({ success: false, message: "Username already exists!" });
-  }
-
-  const hash = await bcrypt.hash(password, saltRounds);
-  const newUser = await db.query(
-    "INSERT INTO users(username, password) VALUES ($1, $2) RETURNING *",
-    [username, hash]
-  );
-
-  res.status(201).json({ success: true, message: "User registered successfully!", user: newUser.rows[0] });
-}));
+});
 
 app.post("/login", asyncHandler(async (req, res) => {
   const { username, password } = req.body;
