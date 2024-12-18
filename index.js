@@ -127,16 +127,25 @@ app.post(
 
 // Example of a protected route
 app.get(
-  "/protected",
+  "/verify",
   authenticateToken,
   asyncHandler(async (req, res) => {
+    const userId = req.user.id; 
+    const userResult = await db.query("SELECT id, username, email FROM users WHERE id=$1", [userId]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const user = userResult.rows[0]; // Fetch the user details
     res.status(200).json({
       success: true,
       message: "You have access to this protected route!",
-      user: req.user,
+      user, // Include user details in the response
     });
   })
 );
+
 
 // Global error handler
 app.use((err, req, res, next) => {
