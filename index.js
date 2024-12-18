@@ -3,11 +3,13 @@ import bodyParser from "body-parser";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import db from "./db.js";
+import dotenv from "dotenv";
+dotenv.config();
 
+const jwtSecret = process.env.JWT_SECRET;
 const app = express();
 const port = 3000;
 const saltRounds = 10;
-const jwtSecret = ""; 
 const tokenExpiration = "7d";
 
 app.use(bodyParser.urlencoded({ extended: true }));
