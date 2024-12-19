@@ -7,6 +7,7 @@ export const getProducts = async (req, res) => {
     let query = `
       SELECT 
         id, 
+        new_id,
         title, 
         description, 
         price, 
@@ -49,6 +50,7 @@ export const getProducts = async (req, res) => {
     }
 
     const { rows } = await db.query(query, params);
+    console.log(rows);
 
     res.status(200).json({
       success: true,

@@ -35,7 +35,8 @@ CREATE TABLE user_tokens (
 );
 
 CREATE TABLE products (
-    id SERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,  
+    new_id UUID DEFAULT gen_random_uuid(),  
     title VARCHAR(255),
     description TEXT,
     price DECIMAL(10, 2),
@@ -43,11 +44,12 @@ CREATE TABLE products (
     discount DECIMAL(5, 2),
     link VARCHAR(255),
     video_link VARCHAR(255),
-    image_link VARCHAR(255), -- New column for product image
+    image_link VARCHAR(255),  -- New column for product image
     category VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 
 CREATE TABLE wishlists (
