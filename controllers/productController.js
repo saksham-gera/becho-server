@@ -65,3 +65,61 @@ export const getProducts = async (req, res) => {
     });
   }
 };
+
+export const insertProduct = async (req, res) => {
+  const {
+    title,
+    description,
+    price,
+    ratings,
+    discount,
+    link,
+    video_link,
+    category,
+    image_link,
+  } = req.body;
+
+  try {
+    // if (!title || !price || !category) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Title, price, and category are required fields."
+    //   });
+    // }
+
+    const query = `
+      INSERT INTO products (
+        title, description, price, ratings, discount, link, video_link, category, image_link
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9
+      ) RETURNING *;
+    `;
+
+    const params = [
+      title,
+      description || null,
+      price,
+      ratings || null,
+      discount || null,
+      link || null,
+      video_link || null,
+      category,
+      image_link || null,
+    ];
+
+    const { rows } = await db.query(query, params);
+
+    res.status(201).json({
+      success: true,
+      message: "Product inserted successfully.",
+      product: rows[0],
+    });
+  } catch (error) {
+    console.error("Error inserting product:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to insert product.",
+      error: error.message,
+    });
+  }
+};
