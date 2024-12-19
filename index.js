@@ -3,6 +3,8 @@ import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
+
 
 dotenv.config();
 
@@ -15,6 +17,7 @@ app.use(bodyParser.json());
 // Routes
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
+app.use("/products", productRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
