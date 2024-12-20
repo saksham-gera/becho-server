@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
+import wishlistRoutes from "./routes/wishlistRoutes.js";
 
 
 dotenv.config();
@@ -18,6 +19,7 @@ app.use(bodyParser.json());
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/products", productRoutes);
+app.use('/wishlist', wishlistRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
