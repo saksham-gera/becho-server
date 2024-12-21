@@ -5,16 +5,36 @@ export const getWishlist = async (req, res) => {
 
   try {
     const wishlistQuery = await db.query(`
-      SELECT p.new_id, p.title, p.id AS product_id
+      SELECT 
+        p.id,  
+        p.new_id,  
+        p.title,  
+        p.description,  
+        p.price,  
+        p.ratings,  
+        p.discount,  
+        p.link,  
+        p.video_link,  
+        p.image_link,  
+        p.category,  
+        p.created_at,  
+        p.updated_at
       FROM wishlists w
       JOIN products p ON w.product_id = p.id
       WHERE w.user_id = $1
     `, [userId]);
 
-    res.status(200).json(wishlistQuery.rows);
+    res.status(200).json({
+      success: true,
+      wishlist: wishlistQuery.rows,
+    });
   } catch (error) {
     console.error('Error retrieving wishlist:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve wishlist',
+      error: error.message,
+    });
   }
 };
 
