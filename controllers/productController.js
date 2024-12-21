@@ -1,57 +1,65 @@
 import db from "../db.js";
 
+// import db from "../db.js";
+
 export const getProducts = async (req, res) => {
-  const { category, minPrice, maxPrice, ratings, discount } = req.query;
+  const { category, minPrice, maxPrice, ratings, discount, userId } = req.query;
 
   try {
     let query = `
       SELECT 
-        id, 
-        new_id,
-        title, 
-        description, 
-        price, 
-        ratings, 
-        discount, 
-        link, 
-        video_link, 
-        category, 
-        image_link, 
-        created_at, 
-        updated_at 
-      FROM products 
+        p.id, 
+        p.new_id,
+        p.title, 
+        p.description, 
+        p.price, 
+        p.ratings, 
+        p.discount, 
+        p.link, 
+        p.video_link, 
+        p.category, 
+        p.image_link, 
+        p.created_at, 
+        p.updated_at,
+        -- Check if the product is in the user's wishlist
+        CASE WHEN w.product_id IS NOT NULL THEN TRUE ELSE FALSE END AS in_wishlist
+      FROM products p
+      LEFT JOIN wishlists w ON p.id = w.product_id AND w.user_id = $1
       WHERE 1=1
     `;
-    const params = [];
+    
+    const params = [userId]; // Add userId as a parameter
 
+    // Apply filters based on query parameters
     if (category) {
       params.push(category);
-      query += ` AND category = $${params.length}`;
+      query += ` AND p.category = $${params.length}`;
     }
 
     if (minPrice) {
       params.push(minPrice);
-      query += ` AND price >= $${params.length}`;
+      query += ` AND p.price >= $${params.length}`;
     }
 
     if (maxPrice) {
       params.push(maxPrice);
-      query += ` AND price <= $${params.length}`;
+      query += ` AND p.price <= $${params.length}`;
     }
 
     if (ratings) {
       params.push(ratings);
-      query += ` AND ratings >= $${params.length}`;
+      query += ` AND p.ratings >= $${params.length}`;
     }
 
     if (discount) {
       params.push(discount);
-      query += ` AND discount >= $${params.length}`;
+      query += ` AND p.discount >= $${params.length}`;
     }
 
+    // Execute query and retrieve results
     const { rows } = await db.query(query, params);
-    console.log(rows);
 
+    // Return results with in_wishlist flag
     res.status(200).json({
       success: true,
       data: rows,
@@ -66,6 +74,7 @@ export const getProducts = async (req, res) => {
   }
 };
 
+
 ///
 export const insertProduct = async (req, res) => {
   const {
@@ -79,7 +88,6 @@ export const insertProduct = async (req, res) => {
     category,
     image_link,
   } = req.body;
-
   try {
     // if (!title || !price || !category) {
     //   return res.status(400).json({
@@ -87,7 +95,6 @@ export const insertProduct = async (req, res) => {
     //     message: "Title, price, and category are required fields."
     //   });
     // }
-
     const query = `
       INSERT INTO products (
         title, description, price, ratings, discount, link, video_link, category, image_link
@@ -128,10 +135,21 @@ export const insertProduct = async (req, res) => {
 ///
 export const getProductByNewId = async (req, res) => {
   const { new_id } = req.params;
+  const { userId } = req.query; 
 
   try {
-    const query = `SELECT * FROM products WHERE new_id = $1`;
-    const params = [new_id];
+    const query = `
+      SELECT 
+        p.*, 
+        CASE 
+          WHEN w.product_id IS NOT NULL THEN TRUE 
+          ELSE FALSE 
+        END AS in_wishlist
+      FROM products p
+      LEFT JOIN wishlists w ON p.id = w.product_id AND w.user_id = $2
+      WHERE p.new_id = $1;
+    `;
+    const params = [new_id, userId];
     const { rows } = await db.query(query, params);
 
     if (rows.length === 0) {
@@ -154,6 +172,7 @@ export const getProductByNewId = async (req, res) => {
     });
   }
 };
+
 
 ///
 export const updateProductByNewId = async (req, res) => {
@@ -214,7 +233,7 @@ export const updateProductByNewId = async (req, res) => {
       message: "Product updated successfully.",
       product: rows[0],
     });
-  } catch (error) {
+  }catch (error) {
     console.error("Error updating product:", error);
     res.status(500).json({
       success: false,
