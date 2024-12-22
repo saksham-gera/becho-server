@@ -5,12 +5,13 @@ import {
     getProductByNewId,
     updateProductByNewId,
     deleteProductByNewId,
-    // getfilteredProducts,
+    searchProducts,
   } from "../controllers/productController.js";
 
 const router = express.Router();
 
 router.get("/", getProducts);
+router.get("/search", searchProducts);
 router.post("/", insertProduct);
 router.get("/:new_id", getProductByNewId);
 router.put("/update/:new_id", updateProductByNewId);
