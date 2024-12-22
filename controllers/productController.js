@@ -28,9 +28,9 @@ export const getProducts = async (req, res) => {
 
     const params = [userId]; // Add userId as the first parameter
 
-    // Apply filters based on query parameters
+    // Apply search query if provided
     if (searchQuery) {
-      const searchFilter = `%${searchQuery.toLowerCase()}%`;
+      const searchFilter = `%${searchQuery.toLowerCase()}%`;  // Add wildcards around the search query
       params.push(searchFilter, searchFilter, searchFilter);
       query += `
         AND (
@@ -41,11 +41,13 @@ export const getProducts = async (req, res) => {
       `;
     }
 
+    // Apply category filter
     if (category) {
       params.push(category);
       query += ` AND p.category = $${params.length}`;
     }
 
+    // Apply price range filter
     if (minPrice) {
       params.push(minPrice);
       query += ` AND p.price >= $${params.length}`;
@@ -56,15 +58,19 @@ export const getProducts = async (req, res) => {
       query += ` AND p.price <= $${params.length}`;
     }
 
+    // Apply ratings filter
     if (ratings) {
       params.push(ratings);
       query += ` AND p.ratings >= $${params.length}`;
     }
 
+    // Apply discount filter
     if (discount) {
       params.push(discount);
       query += ` AND p.discount >= $${params.length}`;
     }
+
+    console.log('Final SQL Query:', query); // Log the query for debugging
 
     // Execute query and retrieve results
     const { rows } = await db.query(query, params);
