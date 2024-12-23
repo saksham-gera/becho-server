@@ -2,7 +2,7 @@ import redis from '../redisClient.js';
 import db from "../db.js";
 
 export const getRandomReels = async (req, res) => {
-  const userId = req.user.id; 
+  const { userId } = req.params; 
   try {
     const seenReelsKey = `seen_reels:${userId}`;
     const seenReels = await redis.smembers(seenReelsKey);
