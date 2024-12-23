@@ -13,7 +13,6 @@ export const register = async (req, res) => {
     "SELECT * FROM users WHERE username=$1 OR email=$2",
     [username, email]
   );
-
   if (existingUser.rows.length > 0) {
     return res
       .status(400)
@@ -48,10 +47,8 @@ export const login = async (req, res) => {
   if (userResult.rows.length === 0) {
     return res.status(401).json({ success: false, message: "User not found!" });
   }
-
   const user = userResult.rows[0];
   const isMatch = await bcrypt.compare(password, user.password);
-
   if (!isMatch) {
     return res.status(401).json({ success: false, message: "Invalid password!" });
   }
@@ -59,7 +56,6 @@ export const login = async (req, res) => {
   const token = jwt.sign({ id:user.id}, jwtSecret, {
     expiresIn: tokenExpiration,
   });
-
   res.status(200).json({
     success: true,
     message: "Login successful!",
