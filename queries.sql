@@ -65,3 +65,13 @@ CREATE TABLE categories (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE reels (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), 
+  product_id UUID NOT NULL,  
+  url TEXT NOT NULL,
+  description TEXT,
+  wishlisted INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);

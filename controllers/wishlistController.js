@@ -11,7 +11,6 @@ export const getWishlist = async (req, res) => {
         p.ratings,  
         p.discount,  
         p.link,  
-        p.video_link,  
         p.image_link,  
         p.category_id,  
         p.created_at,  
