@@ -42,7 +42,6 @@ CREATE TABLE products (
     ratings DECIMAL(3, 2),
     discount DECIMAL(5, 2),
     link VARCHAR(255),
-    video_link VARCHAR(255),
     image_link VARCHAR(255), 
     category VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
