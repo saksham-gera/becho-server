@@ -7,7 +7,6 @@ export const getProducts = async (req, res) => {
     let query = `
       SELECT 
         p.id, 
-        p.new_id,
         p.title, 
         p.description, 
         p.price, 
@@ -15,7 +14,7 @@ export const getProducts = async (req, res) => {
         p.discount, 
         p.link, 
         p.video_link, 
-        p.category, 
+        p.category_id, 
         p.image_link, 
         p.created_at, 
         p.updated_at,
@@ -36,7 +35,7 @@ export const getProducts = async (req, res) => {
         AND (
           LOWER(p.title) LIKE $${params.length - 2} OR
           LOWER(p.description) LIKE $${params.length - 1} OR
-          LOWER(p.category) LIKE $${params.length}
+          LOWER(p.category_id) LIKE $${params.length}
         )
       `;
     }
@@ -44,7 +43,7 @@ export const getProducts = async (req, res) => {
     // Apply category filter
     if (category) {
       params.push(category);
-      query += ` AND p.category = $${params.length}`;
+      query += ` AND p.category_id = $${params.length}`;
     }
 
     // Apply price range filter
@@ -109,19 +108,22 @@ export const insertProduct = async (req, res) => {
     discount,
     link,
     video_link,
-    category,
+    category_id,
     image_link,
   } = req.body;
+
+  // Validation for required fields
+  if (!title || !price || !category_id) {
+    return res.status(400).json({
+      success: false,
+      message: "Title, price, and category are required fields."
+    });
+  }
+
   try {
-    // if (!title || !price || !category) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "Title, price, and category are required fields."
-    //   });
-    // }
     const query = `
       INSERT INTO products (
-        title, description, price, ratings, discount, link, video_link, category, image_link
+        title, description, price, ratings, discount, link, video_link, category_id, image_link
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9
       ) RETURNING *;
@@ -135,7 +137,7 @@ export const insertProduct = async (req, res) => {
       discount || null,
       link || null,
       video_link || null,
-      category,
+      category_id,
       image_link || null,
     ];
 
@@ -157,8 +159,8 @@ export const insertProduct = async (req, res) => {
 };
 
 ///
-export const getProductByNewId = async (req, res) => {
-  const { new_id } = req.params;
+export const getProductById = async (req, res) => {
+  const { id } = req.params;
   const { userId } = req.query; 
 
   try {
@@ -171,9 +173,9 @@ export const getProductByNewId = async (req, res) => {
         END AS in_wishlist
       FROM products p
       LEFT JOIN wishlists w ON p.id = w.product_id AND w.user_id = $2
-      WHERE p.new_id = $1;
+      WHERE p.id = $1;
     `;
-    const params = [new_id, userId];
+    const params = [id, userId];
     const { rows } = await db.query(query, params);
 
     if (rows.length === 0) {
@@ -188,7 +190,7 @@ export const getProductByNewId = async (req, res) => {
       product: rows[0],
     });
   } catch (error) {
-    console.error("Error retrieving product by new_id:", error);
+    console.error("Error retrieving product by id:", error);
     res.status(500).json({
       success: false,
       message: "Failed to retrieve product",
@@ -199,8 +201,8 @@ export const getProductByNewId = async (req, res) => {
 
 
 ///
-export const updateProductByNewId = async (req, res) => {
-  const { new_id } = req.params;
+export const updateProductById = async (req, res) => {
+  const { id } = req.params;
   const {
     title,
     description,
@@ -209,7 +211,7 @@ export const updateProductByNewId = async (req, res) => {
     discount,
     link,
     video_link,
-    category,
+    category_id,
     image_link,
   } = req.body;
 
@@ -223,10 +225,10 @@ export const updateProductByNewId = async (req, res) => {
         discount = $5, 
         link = $6, 
         video_link = $7, 
-        category = $8, 
+        category_id = $8, 
         image_link = $9,
         updated_at = NOW()
-      WHERE new_id = $10
+      WHERE id = $10
       RETURNING *;
     `;
 
@@ -238,9 +240,9 @@ export const updateProductByNewId = async (req, res) => {
       discount || null,
       link || null,
       video_link || null,
-      category,
+      category_id,
       image_link || null,
-      new_id,
+      id,
     ];
 
     const { rows } = await db.query(query, params);
@@ -257,7 +259,7 @@ export const updateProductByNewId = async (req, res) => {
       message: "Product updated successfully.",
       product: rows[0],
     });
-  }catch (error) {
+  } catch (error) {
     console.error("Error updating product:", error);
     res.status(500).json({
       success: false,
@@ -268,12 +270,12 @@ export const updateProductByNewId = async (req, res) => {
 };
 
 ///
-export const deleteProductByNewId = async (req, res) => {
-  const { new_id } = req.params;
+export const deleteProductById = async (req, res) => {
+  const { id } = req.params;
 
   try {
-    const query = `DELETE FROM products WHERE new_id = $1 RETURNING *`;
-    const params = [new_id];
+    const query = `DELETE FROM products WHERE id = $1 RETURNING *`;
+    const params = [id];
     const { rows } = await db.query(query, params);
 
     if (rows.length === 0) {
@@ -298,11 +300,11 @@ export const deleteProductByNewId = async (req, res) => {
   }
 };
 
+
 export const searchProducts = async (req, res) => {
   const { query: searchQuery } = req.query;
 
   try {
-    // Check if the search query is provided
     if (!searchQuery) {
       return res.status(400).json({
         success: false,
@@ -313,7 +315,6 @@ export const searchProducts = async (req, res) => {
     const query = `
       SELECT 
         id, 
-        new_id, 
         title, 
         description, 
         price, 
@@ -321,7 +322,7 @@ export const searchProducts = async (req, res) => {
         discount, 
         link, 
         video_link, 
-        category, 
+        category_id, 
         image_link, 
         created_at, 
         updated_at
@@ -329,7 +330,7 @@ export const searchProducts = async (req, res) => {
       WHERE 
         LOWER(title) LIKE LOWER($1) OR
         LOWER(description) LIKE LOWER($1) OR
-        LOWER(category) LIKE LOWER($1);
+        LOWER(category_id::TEXT) LIKE LOWER($1);  // Ensure category_id is treated as a string
     `;
 
     const params = [`%${searchQuery}%`];
@@ -356,4 +357,5 @@ export const searchProducts = async (req, res) => {
     });
   }
 };
+
 
