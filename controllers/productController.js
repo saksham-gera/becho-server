@@ -121,9 +121,9 @@ export const insertProduct = async (req, res) => {
   try {
     const query = `
       INSERT INTO products (
-        title, description, price, ratings, discount,link,category_id, image_link
+        id, title, description, price, ratings, discount, link, category_id, image_link, created_at, updated_at
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9
+        DEFAULT, $1, $2, $3, $4, $5, $6, $7, $8, DEFAULT, DEFAULT
       ) RETURNING *;
     `;
 
