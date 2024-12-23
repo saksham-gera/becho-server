@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.post('/handle', toggleWishlist);
 // router.get('/')
-router.get('/:userId', getWishlist);
+router.get('/', getWishlist);
 
 // router.post('/remove', removeFromWishlist);
 

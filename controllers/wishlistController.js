@@ -1,5 +1,8 @@
+import { validate as isUuid } from 'uuid';
+import db from "../db.js";
+
 export const getWishlist = async (req, res) => {
-  const { userId } = req.params;
+  const { userId } = req.query;
 
   try {
     const wishlistQuery = await db.query(`
@@ -35,7 +38,15 @@ export const getWishlist = async (req, res) => {
 };
 
 export const toggleWishlist = async (req, res) => {
+  console.log("aa")
   const { userId, id } = req.body;
+  console.log(userId);
+  if (!userId || !id) {
+    return res.status(400).json({
+      success: false,
+      message: "User ID and Product ID are required to toggle wishlist.",
+    });
+  }
 
   try {
     const wishlistQuery = await db.query(
@@ -48,16 +59,20 @@ export const toggleWishlist = async (req, res) => {
         'DELETE FROM wishlists WHERE user_id = $1 AND product_id = $2',
         [userId, id]
       );
-      return res.status(200).json({ message: 'Product removed from wishlist' });
+      return res.status(200).json({ success: true, message: 'Removed from wishlist' });
     } else {
       await db.query(
         'INSERT INTO wishlists (user_id, product_id) VALUES ($1, $2)',
         [userId, id]
       );
-      return res.status(201).json({ message: 'Product added to wishlist' });
+      return res.status(201).json({ success: true, message: 'Added to wishlist' });
     }
   } catch (error) {
-    console.error('Error toggling wishlist:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error toggling wishlist:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to toggle wishlist",
+      error: error.message,
+    });
   }
 };
