@@ -6,7 +6,7 @@ import userRoutes from "./routes/userRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
-// import redis from 'redis';
+import reelsRoutes from "./routes/reelRotes.js"
 
 dotenv.config();
 
@@ -23,6 +23,7 @@ app.use("/users", userRoutes);
 app.use("/products", productRoutes);
 app.use('/wishlist', wishlistRoutes);
 app.use('/category', categoryRoutes);
+app.use('/reels', reelsRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
