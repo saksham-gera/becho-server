@@ -11,7 +11,6 @@ import {
 const router = express.Router();
 
 router.get("/", getProducts);
-router.get("/search", searchProducts);
 router.post("/", insertProduct);
 router.get("/:id", getProductById);
 router.put("/update/:id", updateProductById);
