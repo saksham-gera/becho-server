@@ -27,10 +27,15 @@ export const register = async (req, res) => {
     [username, email, hashedPassword]
   );
 
+  const token = jwt.sign({ id:user.id}, jwtSecret, {
+    expiresIn: tokenExpiration,
+  });
+
   res.status(201).json({
     success: true,
     message: "User registered successfully!",
     user: { id: result.rows[0].id, username, email },
+    token
   });
 };
 
@@ -51,7 +56,7 @@ export const login = async (req, res) => {
     return res.status(401).json({ success: false, message: "Invalid password!" });
   }
 
-  const token = jwt.sign({ id: toString(user.id)}, jwtSecret, {
+  const token = jwt.sign({ id:user.id}, jwtSecret, {
     expiresIn: tokenExpiration,
   });
 
