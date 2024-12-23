@@ -6,7 +6,7 @@ import userRoutes from "./routes/userRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
-import reelsRoutes from "./routes/reelRotes.js"
+import reelsRoutes from "./routes/reelRoutes.js"
 
 dotenv.config();
 
