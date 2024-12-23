@@ -60,7 +60,7 @@ export const getRandomReels = async (req, res) => {
 
 
 export const addReel = async (req, res) => {
-  const { product_id, url, description, wishlisted } = req.body; // Include wishlisted in the request body
+  const { product_id, url, description, wishlisted } = req.body; 
 
   if (!product_id || !url) {
     return res.status(400).json({ error: 'Product ID and URL are required.' });
@@ -75,8 +75,8 @@ export const addReel = async (req, res) => {
     const params = [
       product_id,
       url,
-      description || null, // Use null if description is not provided
-      wishlisted !== undefined ? wishlisted : 0, // Default to 0 if wishlisted is not provided
+      description || null, 
+      wishlisted !== undefined ? wishlisted : 0,
     ];
 
     const { rows } = await db.query(query, params);
