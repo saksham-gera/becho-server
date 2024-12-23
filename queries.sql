@@ -43,7 +43,7 @@ CREATE TABLE products (
     discount DECIMAL(5, 2),
     link VARCHAR(255),
     image_link VARCHAR(255), 
-    category VARCHAR(255),
+    category_id VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
