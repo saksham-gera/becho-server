@@ -13,7 +13,6 @@ export const getProducts = async (req, res) => {
         p.ratings, 
         p.discount, 
         p.link, 
-        p.video_link, 
         p.category_id, 
         p.image_link, 
         p.created_at, 
@@ -107,7 +106,6 @@ export const insertProduct = async (req, res) => {
     ratings,
     discount,
     link,
-    video_link,
     category_id,
     image_link,
   } = req.body;
@@ -123,7 +121,7 @@ export const insertProduct = async (req, res) => {
   try {
     const query = `
       INSERT INTO products (
-        title, description, price, ratings, discount, link, video_link, category_id, image_link
+        title, description, price, ratings, discount, link,category_id, image_link
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9
       ) RETURNING *;
@@ -136,7 +134,6 @@ export const insertProduct = async (req, res) => {
       ratings || null,
       discount || null,
       link || null,
-      video_link || null,
       category_id,
       image_link || null,
     ];
@@ -210,7 +207,6 @@ export const updateProductById = async (req, res) => {
     ratings,
     discount,
     link,
-    video_link,
     category_id,
     image_link,
   } = req.body;
@@ -224,7 +220,6 @@ export const updateProductById = async (req, res) => {
         ratings = $4, 
         discount = $5, 
         link = $6, 
-        video_link = $7, 
         category_id = $8, 
         image_link = $9,
         updated_at = NOW()
@@ -239,7 +234,6 @@ export const updateProductById = async (req, res) => {
       ratings || null,
       discount || null,
       link || null,
-      video_link || null,
       category_id,
       image_link || null,
       id,
@@ -321,7 +315,6 @@ export const searchProducts = async (req, res) => {
         ratings, 
         discount, 
         link, 
-        video_link, 
         category_id, 
         image_link, 
         created_at, 
