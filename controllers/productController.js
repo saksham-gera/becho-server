@@ -106,8 +106,8 @@ export const insertProduct = async (req, res) => {
     ratings,
     discount,
     link,
-    image_link,
-    category_id
+    category_id,
+    image_link
   } = req.body;
 
   // Validation for required fields
@@ -121,7 +121,7 @@ export const insertProduct = async (req, res) => {
   try {
     const query = `
       INSERT INTO products (
-        title, description, price, ratings, discount, link,category_id, image_link
+        title, description, price, ratings, discount,link,category_id, image_link
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9
       ) RETURNING *;
