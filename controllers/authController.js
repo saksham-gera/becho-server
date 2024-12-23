@@ -27,10 +27,15 @@ export const register = async (req, res) => {
     [username, email, hashedPassword]
   );
 
+  const token = jwt.sign({ id:user.id}, jwtSecret, {
+    expiresIn: tokenExpiration,
+  });
+
   res.status(201).json({
     success: true,
     message: "User registered successfully!",
     user: { id: result.rows[0].id, username, email },
+    token
   });
 };
 
