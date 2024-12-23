@@ -60,7 +60,7 @@ export const getRandomReels = async (req, res) => {
 
 
 export const addReel = async (req, res) => {
-  const { product_id, url, description } = req.body; 
+  const { product_id, url, description, wishlisted } = req.body; // Include wishlisted in the request body
 
   if (!product_id || !url) {
     return res.status(400).json({ error: 'Product ID and URL are required.' });
@@ -68,11 +68,16 @@ export const addReel = async (req, res) => {
 
   try {
     const query = `
-      INSERT INTO reels (product_id, url, description) 
+      INSERT INTO reels (product_id, url, description, wishlisted) 
       VALUES ($1, $2, $3, $4) 
       RETURNING id, product_id, url, description, wishlisted, created_at, updated_at;
     `;
-    const params = [product_id, url, description || null, wishlisted || 0];
+    const params = [
+      product_id,
+      url,
+      description || null, // Use null if description is not provided
+      wishlisted !== undefined ? wishlisted : 0, // Default to 0 if wishlisted is not provided
+    ];
 
     const { rows } = await db.query(query, params);
 
@@ -84,10 +89,10 @@ export const addReel = async (req, res) => {
       reel: newReel,
     });
   } catch (error) {
-    console.error("Error adding reel:", error);
+    console.error('Error adding reel:', error);
     res.status(500).json({
       success: false,
-      message: "Failed to add reel.",
+      message: 'Failed to add reel.',
       error: error.message,
     });
   }
