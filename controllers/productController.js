@@ -106,8 +106,8 @@ export const insertProduct = async (req, res) => {
     ratings,
     discount,
     link,
-    category_id,
     image_link,
+    category_id
   } = req.body;
 
   // Validation for required fields
