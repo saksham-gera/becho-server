@@ -66,7 +66,7 @@ export const getRandomReels = async (req, res) => {
 
 
 export const addReel = async (req, res) => {
-  const { product_id, url, description } = req.body; 
+  const { product_id, url, description,wishlisted = 0 } = req.body; 
 
   if (!product_id || !url) {
     return res.status(400).json({ error: 'Product ID and URL are required.' });
