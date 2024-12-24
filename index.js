@@ -12,7 +12,6 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
-// const client = redis.createClient();
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -24,6 +23,7 @@ app.use("/products", productRoutes);
 app.use('/wishlist', wishlistRoutes);
 app.use('/category', categoryRoutes);
 app.use('/reels', reelsRoutes);
+app.use('/commissions', comm);
 
 // Global error handler
 app.use((err, req, res, next) => {
