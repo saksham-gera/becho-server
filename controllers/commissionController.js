@@ -1,4 +1,5 @@
 import db from "../db.js";
+import { v4 as uuidv4 } from 'uuid';
 
 export const incrementClickCount = async (req, res) => {
     const { user_token } = req.body;
