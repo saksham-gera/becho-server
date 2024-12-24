@@ -7,7 +7,7 @@ import productRoutes from "./routes/productRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import reelsRoutes from "./routes/reelRoutes.js"
-
+import commissionsRoutes from "./routes/commissionRoutes.js"
 dotenv.config();
 
 const app = express();
@@ -23,7 +23,7 @@ app.use("/products", productRoutes);
 app.use('/wishlist', wishlistRoutes);
 app.use('/category', categoryRoutes);
 app.use('/reels', reelsRoutes);
-app.use('/commissions', comm);
+app.use('/commissions', commissionsRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
