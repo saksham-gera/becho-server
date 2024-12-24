@@ -21,30 +21,39 @@ export const incrementClickCount = async (req, res) => {
       const commissionQuery = 'SELECT * FROM commissions WHERE user_id = $1';
       const commissionResult = await db.query(commissionQuery, [user_id]);
   
-      if (commissionResult.rows.length === 0) {
-        return res.status(404).json({ message: 'Commission record not found for user' });
-      }
-      const commission = commissionResult.rows[0];
-      const newClicks = commission.clicks_generated + 1;
+      let commission;
   
-      const updateQuery = `
-        UPDATE commissions
-        SET clicks_generated = $1, updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = $2
-        RETURNING *;
-      `;
-      
-      const updatedCommission = await db.query(updateQuery, [newClicks, user_id]);
+      if (commissionResult.rows.length === 0) {
+        const insertQuery = `
+          INSERT INTO commissions (user_id, sales_generated, clicks_generated, earnings, created_at, updated_at)
+          VALUES ($1, 0, 1, 0.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          RETURNING *;
+        `;
+        const insertResult = await db.query(insertQuery, [user_id]);
+        commission = insertResult.rows[0];
+      } else {
+        commission = commissionResult.rows[0];
+        const newClicks = commission.clicks_generated + 1;
+  
+        const updateQuery = `
+          UPDATE commissions
+          SET clicks_generated = $1, updated_at = CURRENT_TIMESTAMP
+          WHERE user_id = $2
+          RETURNING *;
+        `;
+        const updateResult = await db.query(updateQuery, [newClicks, user_id]);
+        commission = updateResult.rows[0];
+      }
   
       return res.status(200).json({
         message: 'Click count updated successfully',
-        commission: updatedCommission.rows[0],
+        commission,
       });
     } catch (error) {
       console.error('Error updating click count:', error);
       return res.status(500).json({ message: 'Internal server error' });
     }
-  }
+  };
 
 
   export const createUserToken = async (req, res) => {
