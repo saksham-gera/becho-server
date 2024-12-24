@@ -2,20 +2,26 @@ import redis from '../redisClient.js';
 import db from "../db.js";
 
 export const getRandomReels = async (req, res) => {
-  const { userId } = req.params; 
+  const { userId } = req.params;
   try {
     const seenReelsKey = `seen_reels:${userId}`;
-    const seenReels = await redis.smembers(seenReelsKey);
+    const seenReels = await redis.sMembers(seenReelsKey);
 
-    const seenReelsArray = seenReels.length ? seenReels : [''];
+    const seenReelsArray = seenReels.length ? seenReels : [];
 
-    const query = `
-      SELECT * FROM reels 
-      WHERE id != ALL($1::uuid[]) 
-      ORDER BY RANDOM() 
-      LIMIT 10
-    `;
-    const params = [seenReelsArray];
+    // Conditionally build the query based on whether there are seen reels
+    let query = `SELECT * FROM reels ORDER BY RANDOM() LIMIT 10`;
+    let params = [];
+
+    if (seenReelsArray.length > 0) {
+      query = `
+        SELECT * FROM reels 
+        WHERE id != ALL($1::uuid[]) 
+        ORDER BY RANDOM() 
+        LIMIT 10
+      `;
+      params = [seenReelsArray];
+    }
 
     const { rows } = await db.query(query, params);
 
@@ -25,7 +31,6 @@ export const getRandomReels = async (req, res) => {
       const totalReelsCount = parseInt(totalReelsResult.rows[0].count, 10);
 
       if (seenReels.length >= totalReelsCount) {
-
         await redis.del(seenReelsKey);
         return res.status(200).json({
           success: true,
@@ -40,8 +45,9 @@ export const getRandomReels = async (req, res) => {
       });
     }
 
+    // Add the seen reels to the Redis set
     rows.forEach((reel) => {
-      redis.sadd(seenReelsKey, reel.id);
+      redis.sAdd(seenReelsKey, reel.id);
     });
 
     res.status(200).json({
