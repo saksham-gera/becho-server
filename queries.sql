@@ -69,7 +69,6 @@ CREATE TABLE reels (
   product_id UUID NOT NULL,  
   url TEXT NOT NULL,
   description TEXT,
-  wishlisted INT DEFAULT 0,
   in_wishlist BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
