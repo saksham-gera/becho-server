@@ -12,35 +12,27 @@ export const getRandomReels = async (req, res) => {
     // Conditionally build the query based on whether there are seen reels
     let query = `
       SELECT r.*, p.title AS title, 
-             COALESCE(wishlist_count.count, 0) AS wishlisted
+             EXISTS (SELECT 1 FROM wishlists w WHERE w.user_id = $1 AND w.product_id = r.product_id) AS in_wishlist,
+             (SELECT COUNT(*) FROM wishlists w WHERE w.product_id = r.product_id) AS wishlisted
       FROM reels r
       LEFT JOIN products p ON r.product_id = p.id
-      LEFT JOIN (
-        SELECT product_id, COUNT(*) AS count
-        FROM wishlists
-        GROUP BY product_id
-      ) wishlist_count ON r.product_id = wishlist_count.product_id
-      ORDER BY RANDOM()
+      WHERE r.id != ALL($2::uuid[]) 
+      ORDER BY RANDOM() 
       LIMIT 10
     `;
-    let params = [];
+    let params = [userId, seenReelsArray];
 
-    if (seenReelsArray.length > 0) {
+    if (seenReelsArray.length === 0) {
       query = `
         SELECT r.*, p.title AS title, 
-               COALESCE(wishlist_count.count, 0) AS wishlisted
+               EXISTS (SELECT 1 FROM wishlists w WHERE w.user_id = $1 AND w.product_id = r.product_id) AS is_wishlist,
+               (SELECT COUNT(*) FROM wishlists w WHERE w.product_id = r.product_id) AS wishlisted
         FROM reels r
         LEFT JOIN products p ON r.product_id = p.id
-        LEFT JOIN (
-          SELECT product_id, COUNT(*) AS count
-          FROM wishlists
-          GROUP BY product_id
-        ) wishlist_count ON r.product_id = wishlist_count.product_id
-        WHERE r.id != ALL($1::uuid[])
-        ORDER BY RANDOM()
+        ORDER BY RANDOM() 
         LIMIT 10
       `;
-      params = [seenReelsArray];
+      params = [userId];
     }
 
     const { rows } = await db.query(query, params);
@@ -83,6 +75,7 @@ export const getRandomReels = async (req, res) => {
     });
   }
 };
+
 
 export const addReel = async (req, res) => {
   const { product_id, url, description } = req.body; 
