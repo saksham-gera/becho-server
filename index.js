@@ -9,6 +9,7 @@ import wishlistRoutes from "./routes/wishlistRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import reelsRoutes from "./routes/reelRoutes.js"
 import profileRoutes from"./routes/profileRoutes.js"
+import commissionRoutes from "./routes/commissionRoutes.js"
 
 dotenv.config();
 
@@ -30,6 +31,8 @@ app.use('/wishlist', wishlistRoutes);
 app.use('/category', categoryRoutes);
 app.use('/reels', reelsRoutes);
 app.use('/profile', profileRoutes);
+app.use('/commissions', commissionRoutes);
+
 
 
 // Global Error Handler
