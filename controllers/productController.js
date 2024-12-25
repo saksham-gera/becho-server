@@ -21,7 +21,7 @@ export const getProducts = async (req, res) => {
         CASE WHEN w.product_id IS NOT NULL THEN TRUE ELSE FALSE END AS in_wishlist
       FROM products p
       LEFT JOIN wishlists w ON p.id = w.product_id AND w.user_id = $1
-      LEFT JOIN categories c ON p.category_id = c.id  -- Join categories table
+      LEFT JOIN categories c ON p.category_id::uuid = c.id  -- Cast category_id to uuid for comparison
       WHERE 1=1
     `;
 
