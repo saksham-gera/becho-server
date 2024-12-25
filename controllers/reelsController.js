@@ -10,14 +10,22 @@ export const getRandomReels = async (req, res) => {
     const seenReelsArray = seenReels.length ? seenReels : [];
 
     // Conditionally build the query based on whether there are seen reels
-    let query = `SELECT * FROM reels ORDER BY RANDOM() LIMIT 10`;
+    let query = `
+      SELECT r.*, p.title AS title
+      FROM reels r
+      LEFT JOIN products p ON r.product_id = p.id
+      ORDER BY RANDOM()
+      LIMIT 10
+    `;
     let params = [];
 
     if (seenReelsArray.length > 0) {
       query = `
-        SELECT * FROM reels 
-        WHERE id != ALL($1::uuid[]) 
-        ORDER BY RANDOM() 
+        SELECT r.*, p.title AS title
+        FROM reels r
+        LEFT JOIN products p ON r.product_id = p.id
+        WHERE r.id != ALL($1::uuid[])
+        ORDER BY RANDOM()
         LIMIT 10
       `;
       params = [seenReelsArray];
