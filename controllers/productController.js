@@ -28,16 +28,19 @@ export const getProducts = async (req, res) => {
 
     // Apply search query if provided
     if (searchQuery) {
-      const searchFilter = `%${searchQuery.toLowerCase()}%`;  // Add wildcards around the search query
-      params.push(searchFilter, searchFilter, searchFilter);
-      query += `
-        AND (
-          LOWER(p.title) LIKE $${params.length - 2} OR
-          LOWER(p.description) LIKE $${params.length - 1} OR
-          LOWER(p.category_id) LIKE $${params.length}
-        )
-      `;
+      const keywords = searchQuery.trim().toLowerCase().split(/\s+/); 
+
+      keywords.forEach((keyword, index) => {
+        const searchFilter = `%${keyword}%`;
+        params.push(searchFilter);
+        query += ` AND (
+          LOWER(p.title) LIKE $${params.length} OR
+          LOWER(p.description) LIKE $${params.length} OR
+          LOWER(c.title) LIKE $${params.length}
+        )`;
+      });
     }
+
 
     // Apply category filter
     if (category) {
