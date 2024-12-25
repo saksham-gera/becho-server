@@ -21,6 +21,7 @@ export const getProducts = async (req, res) => {
         CASE WHEN w.product_id IS NOT NULL THEN TRUE ELSE FALSE END AS in_wishlist
       FROM products p
       LEFT JOIN wishlists w ON p.id = w.product_id AND w.user_id = $1
+      LEFT JOIN categories c ON p.category_id = c.id  -- Join categories table
       WHERE 1=1
     `;
 
@@ -28,24 +29,27 @@ export const getProducts = async (req, res) => {
 
     // Apply search query if provided
     if (searchQuery) {
-      const keywords = searchQuery.trim().toLowerCase().split(/\s+/); 
+      const keywords = searchQuery.trim().toLowerCase().split(/\s+/); // Split search query into individual keywords
+      let searchConditions = []; // Array to hold the OR conditions for each keyword
 
       keywords.forEach((keyword, index) => {
         const searchFilter = `%${keyword}%`;
-        params.push(searchFilter);
-        query += ` AND (
-          LOWER(p.title) LIKE $${params.length} OR
-          LOWER(p.description) LIKE $${params.length} OR
-          LOWER(c.title) LIKE $${params.length}
-        )`;
+        searchConditions.push(`
+          LOWER(p.title) LIKE $${params.length + 1} OR
+          LOWER(p.description) LIKE $${params.length + 2} OR
+          LOWER(c.title) LIKE $${params.length + 3}
+        `);
+        params.push(searchFilter, searchFilter, searchFilter); // Push search filter for each column
       });
-    }
 
+      // Join the search conditions using OR
+      query += ` AND (${searchConditions.join(' OR ')})`;
+    }
 
     // Apply category filter
     if (category) {
-      params.push(category);
-      query += ` AND p.category_id = $${params.length}`;
+      params.push(category.toLowerCase());  // Make category case-insensitive
+      query += ` AND LOWER(c.title) = $${params.length}`;  // Filter by category title
     }
 
     // Apply price range filter
