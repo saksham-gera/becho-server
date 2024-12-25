@@ -1,6 +1,7 @@
 import express from "express";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
+import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
@@ -13,8 +14,11 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
-// const client = redis.createClient();
 
+// Enable CORS
+app.use(cors());
+
+// Body Parser Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -28,7 +32,7 @@ app.use('/reels', reelsRoutes);
 app.use('/profile', profileRoutes);
 
 
-// Global error handler
+// Global Error Handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
@@ -38,6 +42,7 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Start Server
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
