@@ -25,7 +25,7 @@ export const getRandomReels = async (req, res) => {
     if (seenReelsArray.length === 0) {
       query = `
         SELECT r.*, p.title AS title, 
-               EXISTS (SELECT 1 FROM wishlists w WHERE w.user_id = $1 AND w.product_id = r.product_id) AS is_wishlist,
+               EXISTS (SELECT 1 FROM wishlists w WHERE w.user_id = $1 AND w.product_id = r.product_id) AS in_wishlist,
                (SELECT COUNT(*) FROM wishlists w WHERE w.product_id = r.product_id) AS wishlisted
         FROM reels r
         LEFT JOIN products p ON r.product_id = p.id
