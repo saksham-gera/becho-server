@@ -70,6 +70,7 @@ CREATE TABLE reels (
   url TEXT NOT NULL,
   description TEXT,
   wishlisted INT DEFAULT 0,
+  in_wishlist BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE

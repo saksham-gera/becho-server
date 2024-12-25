@@ -7,6 +7,7 @@ import productRoutes from "./routes/productRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import reelsRoutes from "./routes/reelRoutes.js"
+import profileRoutes from"./routes/profileRoutes.js"
 
 dotenv.config();
 
@@ -24,6 +25,8 @@ app.use("/products", productRoutes);
 app.use('/wishlist', wishlistRoutes);
 app.use('/category', categoryRoutes);
 app.use('/reels', reelsRoutes);
+app.use('/profile', profileRoutes);
+
 
 // Global error handler
 app.use((err, req, res, next) => {
