@@ -1,6 +1,79 @@
 import db from "../db.js";
 import { v4 as uuidv4 } from 'uuid';
 
+export const getCommissions = async (req, res) => {
+  try {
+    const { userId, period, offset } = req.query;
+
+    // Validate inputs
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required.' });
+    }
+
+    if (!period || !['daily', 'weekly', 'monthly'].includes(period)) {
+      return res.status(400).json({
+        error: 'Invalid period. Please use "daily", "weekly", or "monthly".',
+      });
+    }
+
+    const offsetValue = parseInt(offset, 10) || 0; // Ensure offset is an integer
+    let dateCondition = '';
+    let groupByClause = '';
+
+    // Determine the SQL condition and grouping based on the period
+    if (period === 'daily') {
+      dateCondition = `DATE(created_at) = CURRENT_DATE - INTERVAL '${offsetValue} days'`;
+      groupByClause = `DATE(created_at)`;
+    } else if (period === 'weekly') {
+      dateCondition = `
+        created_at >= CURRENT_DATE - INTERVAL '${7 * offsetValue + 7} days' 
+        AND created_at < CURRENT_DATE - INTERVAL '${7 * offsetValue} days'
+      `;
+      groupByClause = `DATE_TRUNC('week', created_at)`;
+    } else if (period === 'monthly') {
+      dateCondition = `
+        created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '${offsetValue} months'
+        AND created_at < DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '${offsetValue - 1} months'
+      `;
+      groupByClause = `DATE_TRUNC('month', created_at)`;
+    }
+
+    // Query the database for the commissions
+    const query = `
+        SELECT 
+            ${groupByClause} AS period_start,
+            COALESCE(SUM(sales_generated), 0) AS total_sales_generated,
+            COALESCE(SUM(sales_amount), 0) AS total_sales_amount,
+            COALESCE(SUM(commission), 0) AS total_commission,
+            COALESCE(SUM(clicks_generated), 0) AS total_clicks_generated
+        FROM 
+            commissions
+        WHERE 
+            user_id = $1 AND ${dateCondition}
+        GROUP BY 
+            ${groupByClause}
+        ORDER BY 
+            period_start DESC;
+    `;
+
+    const results = await db.query(query, [userId]);
+
+    res.status(200).json({
+      success: true,
+      message: 'Commissions data fetched successfully.',
+      data: results.rows,
+    });
+  } catch (error) {
+    // Log detailed error information
+    console.error('Error in getCommissions:', error);
+    res.status(500).json({
+      success: false,
+      error: 'An error occurred while fetching commissions data.',
+    });
+  }
+};
+
+
 export const incrementClickCount = async (req, res) => {
     const { user_token } = req.body;
   

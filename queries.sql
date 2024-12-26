@@ -22,9 +22,12 @@ CREATE TABLE commissions (
     sales_generated INTEGER,
     clicks_generated INTEGER,
     earnings DECIMAL(10, 2),
+    commission DECIMAL(10, 2),
+    sales_amount DECIMAL(10, 2),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 CREATE TABLE user_tokens (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

@@ -10,6 +10,7 @@ import categoryRoutes from "./routes/categoryRoutes.js";
 import reelsRoutes from "./routes/reelRoutes.js"
 import profileRoutes from"./routes/profileRoutes.js"
 import commissionRoutes from "./routes/commissionRoutes.js"
+// import
 
 dotenv.config();
 
