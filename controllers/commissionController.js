@@ -45,52 +45,55 @@ export const getCommissions = async (req, res) => {
 
 // commissionController.js
 export const insertCommissionData = async (req, res) => {
-  const { userId, eventType, salesCount, clicksCount, earnings, commission, salesAmount, eventTimestamp } = req.body;
+  const { user_token, salesAmount } = req.body;
 
-  // Prepare the dynamic fields to insert into the database
-  const fields = [];
-  const values = [];
-
-  // Add fields only if they are provided in the request body
-  if (salesCount !== undefined) {
-      fields.push('sales_count');
-      values.push(salesCount);
+  if (!user_token) {
+    return res.status(400).json({ message: 'User token is required' });
   }
-  if (clicksCount !== undefined) {
-      fields.push('clicks_count');
-      values.push(clicksCount);
-  }
-  if (earnings !== undefined) {
-      fields.push('earnings');
-      values.push(earnings);
-  }
-  if (commission !== undefined) {
-      fields.push('commission');
-      values.push(commission);
-  }
-  if (salesAmount !== undefined) {
-      fields.push('sales_amount');
-      values.push(salesAmount);
-  }
-
-  // Always insert these values
-  fields.push('user_id', 'event_type', 'event_timestamp');
-  values.push(userId, eventType, eventTimestamp || new Date());
 
   try {
-      const query = `
-          INSERT INTO commissions (${fields.join(', ')})
-          VALUES (${fields.map((_, i) => `$${i + 1}`).join(', ')}) 
-          RETURNING id
-      `;
-      
-      const result = await db.query(query, values);
-      
-      // Respond with the ID of the inserted record
-      res.status(201).json({ id: result.rows.id, message: 'Commission data inserted successfully' });
+    // Get userId from the user_token
+    const queryToken = `
+      SELECT user_id 
+      FROM user_tokens 
+      WHERE token = $1 AND expires_at > NOW()
+    `;
+    const tokenResult = await db.query(queryToken, [user_token]);
+
+    if (tokenResult.rows.length === 0) {
+      return res.status(401).json({ message: 'Invalid or expired token' });
+    }
+
+    const userId = tokenResult.rows[0].user_id;
+
+    // Determine event type based on salesAmount
+    const eventType = salesAmount > 0 ? 'sales' : 'click';
+
+    // Prepare the dynamic fields to insert into the database
+    const fields = ['user_id', 'clicks_count', 'event_type', 'event_timestamp'];
+    const values = [userId, 1, eventType, new Date()];
+
+    if (salesAmount > 0) {
+      fields.push('sales_count', 'sales_amount');
+      values.push(1, salesAmount);
+    }
+
+    const query = `
+      INSERT INTO commissions (${fields.join(', ')})
+      VALUES (${fields.map((_, i) => `$${i + 1}`).join(', ')})
+      RETURNING id;
+    `;
+
+    const result = await db.query(query, values);
+
+    // Respond with the ID of the inserted record
+    res.status(201).json({
+      id: result.rows[0].id,
+      message: 'Commission data inserted successfully',
+    });
   } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Error inserting commission data' });
+    console.error('Error inserting commission data:', error);
+    res.status(500).json({ message: 'Error inserting commission data' });
   }
 };
 
