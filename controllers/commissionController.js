@@ -1,7 +1,6 @@
 import db from "../db.js";
 import { v4 as uuidv4 } from 'uuid';
 
-
 export const getCommissions = async (req, res) => {
   const { userId, startDate, endDate } = req.query;
 
@@ -20,7 +19,8 @@ export const getCommissions = async (req, res) => {
 
     console.log("Adjusted Dates:", { start, end });
 
-    const query = `
+    // Query 1: Get commission data for the given date range
+    const commissionQuery = `
         SELECT 
             COALESCE(SUM(sales_count), 0) AS total_sales_count,
             COALESCE(SUM(clicks_count), 0) AS total_clicks_count,
@@ -32,15 +32,33 @@ export const getCommissions = async (req, res) => {
           AND event_timestamp BETWEEN $2 AND $3;
     `;
 
-    console.log("Executing query:", query);
+    const commissionResult = await db.query(commissionQuery, [userId, start, end]);
 
-    const result = await db.query(query, [userId, start, end]);
-    res.status(200).json(result.rows[0]); // Return the first row
+    // Query 2: Get lifetime totals for the user
+    const lifetimeQuery = `
+        SELECT 
+            COALESCE(SUM(sales_count), 0) AS lifetime_sales_count,
+            COALESCE(SUM(clicks_count), 0) AS lifetime_clicks_count,
+            COALESCE(SUM(earnings), 0.00) AS lifetime_earnings,
+            COALESCE(SUM(commission), 0.00) AS lifetime_commission,
+            COALESCE(SUM(sales_amount), 0.00) AS lifetime_sales_amount
+        FROM commissions
+        WHERE user_id = $1;
+    `;
+
+    const lifetimeResult = await db.query(lifetimeQuery, [userId]);
+
+    // Combine results into a single response
+    res.status(200).json({
+      commissionData: commissionResult.rows[0], // Date range data
+      lifetimeData: lifetimeResult.rows[0],    // Lifetime totals
+    });
   } catch (error) {
-    console.error("Error fetching commission data:", error);
-    res.status(500).json({ message: "Error fetching commission data" });
+    console.error("Error fetching data:", error);
+    res.status(500).json({ message: "Error fetching data" });
   }
 };
+
 
 
 // commissionController.js
