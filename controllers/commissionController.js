@@ -1,132 +1,98 @@
 import db from "../db.js";
 import { v4 as uuidv4 } from 'uuid';
 
+
 export const getCommissions = async (req, res) => {
+  const { userId, startDate, endDate } = req.query;
+
   try {
-    const { userId, period, offset } = req.query;
+    let start = new Date(startDate).toISOString(); // Convert to ISO format
+    let end = new Date(endDate).toISOString();
 
-    // Validate inputs
-    if (!userId) {
-      return res.status(400).json({ error: 'userId is required.' });
+    // Log the dates
+    console.log("Formatted Dates:", { start, end });
+
+    // Ensure startDate is always earlier than endDate
+    if (new Date(start) > new Date(end)) {
+      // Swap the dates if start is later than end
+      [start, end] = [end, start];
     }
 
-    if (!period || !['daily', 'weekly', 'monthly'].includes(period)) {
-      return res.status(400).json({
-        error: 'Invalid period. Please use "daily", "weekly", or "monthly".',
-      });
-    }
+    console.log("Adjusted Dates:", { start, end });
 
-    const offsetValue = parseInt(offset, 10) || 0; // Ensure offset is an integer
-    let dateCondition = '';
-    let groupByClause = '';
-
-    // Determine the SQL condition and grouping based on the period
-    if (period === 'daily') {
-      dateCondition = `DATE(created_at) = CURRENT_DATE - INTERVAL '${offsetValue} days'`;
-      groupByClause = `DATE(created_at)`;
-    } else if (period === 'weekly') {
-      dateCondition = `
-        created_at >= CURRENT_DATE - INTERVAL '${7 * offsetValue + 7} days' 
-        AND created_at < CURRENT_DATE - INTERVAL '${7 * offsetValue} days'
-      `;
-      groupByClause = `DATE_TRUNC('week', created_at)`;
-    } else if (period === 'monthly') {
-      dateCondition = `
-        created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '${offsetValue} months'
-        AND created_at < DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '${offsetValue - 1} months'
-      `;
-      groupByClause = `DATE_TRUNC('month', created_at)`;
-    }
-
-    // Query the database for the commissions
     const query = `
         SELECT 
-            ${groupByClause} AS period_start,
-            COALESCE(SUM(sales_generated), 0) AS total_sales_generated,
-            COALESCE(SUM(sales_amount), 0) AS total_sales_amount,
-            COALESCE(SUM(commission), 0) AS total_commission,
-            COALESCE(SUM(clicks_generated), 0) AS total_clicks_generated
-        FROM 
-            commissions
-        WHERE 
-            user_id = $1 AND ${dateCondition}
-        GROUP BY 
-            ${groupByClause}
-        ORDER BY 
-            period_start DESC;
+            COALESCE(SUM(sales_count), 0) AS total_sales_count,
+            COALESCE(SUM(clicks_count), 0) AS total_clicks_count,
+            COALESCE(SUM(earnings), 0.00) AS total_earnings,
+            COALESCE(SUM(commission), 0.00) AS total_commission,
+            COALESCE(SUM(sales_amount), 0.00) AS total_sales_amount
+        FROM commissions
+        WHERE user_id = $1
+          AND event_timestamp BETWEEN $2 AND $3;
     `;
 
-    const results = await db.query(query, [userId]);
+    console.log("Executing query:", query);
 
-    res.status(200).json({
-      success: true,
-      message: 'Commissions data fetched successfully.',
-      data: results.rows,
-    });
+    const result = await db.query(query, [userId, start, end]);
+    res.status(200).json(result.rows[0]); // Return the first row
   } catch (error) {
-    // Log detailed error information
-    console.error('Error in getCommissions:', error);
-    res.status(500).json({
-      success: false,
-      error: 'An error occurred while fetching commissions data.',
-    });
+    console.error("Error fetching commission data:", error);
+    res.status(500).json({ message: "Error fetching commission data" });
   }
 };
 
 
-export const incrementClickCount = async (req, res) => {
-    const { user_token } = req.body;
-  
-    if (!user_token) {
-      return res.status(400).json({ message: 'User token is required' });
-    }
-  
-    try {
-      const tokenQuery = 'SELECT user_id FROM user_tokens WHERE token = $1 AND expires_at > CURRENT_TIMESTAMP';
-      const tokenResult = await db.query(tokenQuery, [user_token]);
-  
-      if (tokenResult.rows.length === 0) {
-        return res.status(404).json({ message: 'Invalid or expired token' });
-      }
-  
-      const user_id = tokenResult.rows[0].user_id;
-  
-      const commissionQuery = 'SELECT * FROM commissions WHERE user_id = $1';
-      const commissionResult = await db.query(commissionQuery, [user_id]);
-  
-      let commission;
-  
-      if (commissionResult.rows.length === 0) {
-        const insertQuery = `
-          INSERT INTO commissions (user_id, sales_generated, clicks_generated, earnings, created_at, updated_at)
-          VALUES ($1, 0, 1, 0.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-          RETURNING *;
-        `;
-        const insertResult = await db.query(insertQuery, [user_id]);
-        commission = insertResult.rows[0];
-      } else {
-        commission = commissionResult.rows[0];
-        const newClicks = commission.clicks_generated + 1;
-  
-        const updateQuery = `
-          UPDATE commissions
-          SET clicks_generated = $1, updated_at = CURRENT_TIMESTAMP
-          WHERE user_id = $2
-          RETURNING *;
-        `;
-        const updateResult = await db.query(updateQuery, [newClicks, user_id]);
-        commission = updateResult.rows[0];
-      }
-  
-      return res.status(200).json({
-        message: 'Click count updated successfully',
-        commission,
-      });
-    } catch (error) {
-      console.error('Error updating click count:', error);
-      return res.status(500).json({ message: 'Internal server error' });
-    }
-  };
+// commissionController.js
+export const insertCommissionData = async (req, res) => {
+  const { userId, eventType, salesCount, clicksCount, earnings, commission, salesAmount, eventTimestamp } = req.body;
+
+  // Prepare the dynamic fields to insert into the database
+  const fields = [];
+  const values = [];
+
+  // Add fields only if they are provided in the request body
+  if (salesCount !== undefined) {
+      fields.push('sales_count');
+      values.push(salesCount);
+  }
+  if (clicksCount !== undefined) {
+      fields.push('clicks_count');
+      values.push(clicksCount);
+  }
+  if (earnings !== undefined) {
+      fields.push('earnings');
+      values.push(earnings);
+  }
+  if (commission !== undefined) {
+      fields.push('commission');
+      values.push(commission);
+  }
+  if (salesAmount !== undefined) {
+      fields.push('sales_amount');
+      values.push(salesAmount);
+  }
+
+  // Always insert these values
+  fields.push('user_id', 'event_type', 'event_timestamp');
+  values.push(userId, eventType, eventTimestamp || new Date());
+
+  try {
+      const query = `
+          INSERT INTO commissions (${fields.join(', ')})
+          VALUES (${fields.map((_, i) => `$${i + 1}`).join(', ')}) 
+          RETURNING id
+      `;
+      
+      const result = await db.query(query, values);
+      
+      // Respond with the ID of the inserted record
+      res.status(201).json({ id: result.rows.id, message: 'Commission data inserted successfully' });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Error inserting commission data' });
+  }
+};
 
 
   export const createUserToken = async (req, res) => {
