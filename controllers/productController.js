@@ -204,7 +204,7 @@ export const getProductById = async (req, res) => {
 ///
 export const updateProductById = async (req, res) => {
   const { id } = req.params;
-  const { title, description, price, ratings, discount, link, category_id } = req.body;
+  const { title, description, price, ratings, discount, link, category_id, image_link} = req.body;
   const imageFile = req.file;
 
   try {
@@ -235,7 +235,7 @@ export const updateProductById = async (req, res) => {
       WHERE id = $9
       RETURNING *;
     `;
-    const params = [title, description || null, price, ratings || null, discount || null, link || null, category_id, cloudinaryImageUrl || null, id];
+    const params = [title, description || null, price, ratings || null, discount || null, link || null, category_id, cloudinaryImageUrl || image_link, id];
 
     const { rows } = await db.query(query, params);
 
