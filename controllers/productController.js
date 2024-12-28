@@ -227,10 +227,10 @@ export const updateProductById = async (req, res) => {
         ratings = $4, 
         discount = $5, 
         link = $6, 
-        category_id = $8, 
-        image_link = $9,
+        category_id = $7, 
+        image_link = $8,
         updated_at = NOW()
-      WHERE id = $10
+      WHERE id = $9
       RETURNING *;
     `;
 
