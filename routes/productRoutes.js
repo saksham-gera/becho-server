@@ -11,12 +11,7 @@ import {
 const router = express.Router();
 
 router.get("/", getProducts);
-router.post("/", (req, res, next) => {
-  console.log(req.headers, req.body);
-  next();
-}, upload.single("image"), insertProduct);
-
-
+router.post("/", upload.single("image"), insertProduct);
 router.get("/:id", getProductById);
 router.put("/update/:id", upload.single("image"), updateProductById);
 router.delete("/delete/:id", deleteProductById);
