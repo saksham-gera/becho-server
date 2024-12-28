@@ -1,4 +1,10 @@
 import db from "../db.js";
+import cloudinary from "../config/cloudinary.js";
+import multer from "multer";
+
+const storage = multer.memoryStorage();
+export const upload = multer({ storage });
+
 
 export const getProducts = async (req, res) => {
   const { category, minPrice, maxPrice, ratings, discount, userId, searchQuery } = req.query;
@@ -105,27 +111,35 @@ export const getProducts = async (req, res) => {
 
 
 ///
-export const insertProduct = async (req, res) => {
-  const {
-    title,
-    description,
-    price,
-    ratings,
-    discount,
-    link,
-    category_id,
-    image_link
-  } = req.body;
 
-  // Validation for required fields
-  if (!title || !price || !category_id) {
+export const insertProduct = async (req, res) => {
+  const { title, description, price, ratings, discount, link, category_id } = req.body;
+  const imageFile = req.file;
+  if (!imageFile) {
     return res.status(400).json({
       success: false,
-      message: "Title, price, and category are required fields."
+      message: "Image file is required.",
     });
+  }
+  if (!title || !price || !category_id) {
+    return res.status(400).json({ success: false, message: "Title, price, and category are required fields." });
   }
 
   try {
+    let cloudinaryImageUrl = null;
+
+    if (imageFile) {
+      // Upload image to Cloudinary
+      const uploadResult = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: "products" },
+          (error, result) => (error ? reject(error) : resolve(result))
+        );
+        uploadStream.end(imageFile.buffer);
+      });
+      cloudinaryImageUrl = uploadResult.secure_url;
+    }
+
     const query = `
       INSERT INTO products (
         id, title, description, price, ratings, discount, link, category_id, image_link, created_at, updated_at
@@ -133,34 +147,17 @@ export const insertProduct = async (req, res) => {
         DEFAULT, $1, $2, $3, $4, $5, $6, $7, $8, DEFAULT, DEFAULT
       ) RETURNING *;
     `;
-
-    const params = [
-      title,
-      description || null,
-      price,
-      ratings || null,
-      discount || null,
-      link || null,
-      category_id,
-      image_link || null,
-    ];
+    const params = [title, description || null, price, ratings || null, discount || null, link || null, category_id, cloudinaryImageUrl || null];
 
     const { rows } = await db.query(query, params);
 
-    res.status(201).json({
-      success: true,
-      message: "Product inserted successfully.",
-      product: rows[0],
-    });
+    res.status(201).json({ success: true, message: "Product inserted successfully.", product: rows[0] });
   } catch (error) {
     console.error("Error inserting product:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to insert product.",
-      error: error.message,
-    });
+    res.status(500).json({ success: false, message: "Failed to insert product.", error: error.message });
   }
 };
+
 
 ///
 export const getProductById = async (req, res) => {
@@ -207,18 +204,23 @@ export const getProductById = async (req, res) => {
 ///
 export const updateProductById = async (req, res) => {
   const { id } = req.params;
-  const {
-    title,
-    description,
-    price,
-    ratings,
-    discount,
-    link,
-    category_id,
-    image_link,
-  } = req.body;
+  const { title, description, price, ratings, discount, link, category_id } = req.body;
+  const imageFile = req.file;
 
   try {
+    let cloudinaryImageUrl = null;
+
+    if (imageFile) {
+      const uploadResult = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: "products" },
+          (error, result) => (error ? reject(error) : resolve(result))
+        );
+        uploadStream.end(imageFile.buffer);
+      });
+      cloudinaryImageUrl = uploadResult.secure_url;
+    }
+
     const query = `
       UPDATE products SET 
         title = $1, 
@@ -227,46 +229,24 @@ export const updateProductById = async (req, res) => {
         ratings = $4, 
         discount = $5, 
         link = $6, 
-        category_id = $8, 
-        image_link = $9,
+        category_id = $7, 
+        image_link = $8,
         updated_at = NOW()
-      WHERE id = $10
+      WHERE id = $9
       RETURNING *;
     `;
-
-    const params = [
-      title,
-      description || null,
-      price,
-      ratings || null,
-      discount || null,
-      link || null,
-      category_id,
-      image_link || null,
-      id,
-    ];
+    const params = [title, description || null, price, ratings || null, discount || null, link || null, category_id, cloudinaryImageUrl || null, id];
 
     const { rows } = await db.query(query, params);
 
     if (rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    res.status(200).json({
-      success: true,
-      message: "Product updated successfully.",
-      product: rows[0],
-    });
+    res.status(200).json({ success: true, message: "Product updated successfully.", product: rows[0] });
   } catch (error) {
     console.error("Error updating product:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to update product.",
-      error: error.message,
-    });
+    res.status(500).json({ success: false, message: "Failed to update product.", error: error.message });
   }
 };
 
