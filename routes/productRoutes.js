@@ -18,7 +18,7 @@ router.post("/", (req, res, next) => {
 
 
 router.get("/:id", getProductById);
-router.put("/update/:id", upload.single("image"), updateProductById);
+router.put("/update/:id", updateProductById);
 router.delete("/delete/:id", deleteProductById);
 
 export default router;

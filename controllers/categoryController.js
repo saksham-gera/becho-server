@@ -9,6 +9,18 @@ export const getCategories = async (req, res) => {
     }
 };
 
+export const getCategoryById = async (req, res) => {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'ID is required' });
+    try {
+        const { rows } = await pool.query('SELECT * FROM categories WHERE id = $1', [id]);
+        if (rows.length === 0) return res.status(404).json({ message: 'Category not found' });
+        res.status(200).json(rows[0]);
+    } catch (error) {
+        res.status(500).json({ message: 'Error retrieving category', error: error.message });
+    }
+};
+
 export const addCategory = async (req, res) => {
     const { title } = req.body;
     if (!title) return res.status(400).json({ message: 'Title is required' });
