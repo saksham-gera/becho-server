@@ -1,5 +1,5 @@
 import db from '../db.js';
-import admin from '../config/firebase.js';
+import admin from '../config/firebase.cjs';
 
 export const putFCMToken = async (req, res) => {
     const { fcm_token, user_id } = req.body;
