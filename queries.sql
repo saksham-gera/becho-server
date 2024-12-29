@@ -17,9 +17,8 @@ CREATE TABLE notifications (
 );
 
 CREATE TABLE FCM_Token (
-    fcm_token VARCHAR(255) NOT NULL,
-    user_id INT NOT NULL,
-    PRIMARY KEY (fcm_token)
+    fcm_token TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL
 );
 
 CREATE TABLE commissions (
