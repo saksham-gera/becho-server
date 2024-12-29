@@ -14,7 +14,15 @@ const client = createClient({
 
 client.on('error', err => console.log('Redis Client Error', err));
 
-await client.connect();
+(async () => {
+    try {
+        await client.connect();
+        console.log('Redis connected successfully');
+    } catch (error) {
+        console.error('Error connecting to Redis:', error);
+    }
+})();
+
 
 // await client.set('foo', 'bar');
 // const result = await client.get('foo');
