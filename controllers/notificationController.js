@@ -10,7 +10,7 @@ export const putFCMToken = async (req, res) => {
 
     try {
         await db.query(
-            'INSERT INTO FCM_Token (fcm_token, user_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE user_id = ?',
+            'INSERT INTO FCM_Token (fcm_token, user_id) VALUES ($1, $2) ON DUPLICATE KEY UPDATE user_id = $3',
             [fcm_token, user_id, user_id]
         );
         res.status(200).json({ message: 'FCM token saved successfully.' });
@@ -28,7 +28,7 @@ export const sendNotification = async (req, res) => {
     }
 
     try {
-        const [rows] = await db.query('SELECT fcm_token FROM FCM_Token WHERE user_id = ?', [user_id]);
+        const [rows] = await db.query('SELECT fcm_token FROM FCM_Token WHERE user_id = $1', [user_id]);
 
         if (rows.length === 0) {
             return res.status(404).json({ message: 'No FCM tokens found for the user.' });
