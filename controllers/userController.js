@@ -18,7 +18,7 @@ export const getUserData = async (req, res) => {
 
 export const getAllUsers = async (req, res) => {
   try {
-    const usersResult = await db.query("SELECT id, username, email FROM users");
+    const usersResult = await db.query("SELECT id, username, email, created_at FROM users");
 
     if (usersResult.rows.length === 0) {
       return res.status(404).json({ success: false, message: "No users found" });
