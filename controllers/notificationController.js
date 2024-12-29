@@ -10,8 +10,11 @@ export const putFCMToken = async (req, res) => {
 
     try {
         await db.query(
-            'INSERT INTO FCM_Token (fcm_token, user_id) VALUES ($1, $2) ON DUPLICATE KEY UPDATE user_id = $3',
-            [fcm_token, user_id, user_id]
+            `INSERT INTO FCM_Token (fcm_token, user_id) 
+             VALUES ($1, $2) 
+             ON CONFLICT (fcm_token) 
+             DO UPDATE SET user_id = EXCLUDED.user_id`,
+            [fcm_token, user_id]
         );
         res.status(200).json({ message: 'FCM token saved successfully.' });
     } catch (err) {
@@ -28,13 +31,16 @@ export const sendNotification = async (req, res) => {
     }
 
     try {
-        const [rows] = await db.query('SELECT fcm_token FROM FCM_Token WHERE user_id = $1', [user_id]);
+        const { rows } = await db.query('SELECT fcm_token FROM FCM_Token WHERE user_id = $1', [user_id]);
 
-        if (rows.length === 0) {
+        if (!rows || rows.length === 0) {
             return res.status(404).json({ message: 'No FCM tokens found for the user.' });
         }
 
         const tokens = rows.map(row => row.fcm_token);
+        if (tokens.length === 0) {
+            return res.status(404).json({ message: 'No valid FCM tokens available for the user.' });
+        }
 
         const payload = {
             notification: {
@@ -45,9 +51,26 @@ export const sendNotification = async (req, res) => {
 
         const response = await admin.messaging().sendToDevice(tokens, payload);
 
-        res.status(200).json({ message: 'Notification sent successfully.', response });
+        // Handle invalid tokens from FCM response
+        const invalidTokens = [];
+        response.results.forEach((result, index) => {
+            if (result.error && result.error.code === 'messaging/invalid-registration-token') {
+                invalidTokens.push(tokens[index]);
+            }
+        });
+
+        if (invalidTokens.length > 0) {
+            await db.query('DELETE FROM FCM_Token WHERE fcm_token = ANY($1)', [invalidTokens]);
+        }
+
+        res.status(200).json({
+            message: 'Notification sent successfully.',
+            successCount: response.successCount,
+            failureCount: response.failureCount,
+            invalidTokens,
+        });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Failed to send notification.' });
+        res.status(500).json({ message: `Failed to send notification. ${err.message}` });
     }
 };
