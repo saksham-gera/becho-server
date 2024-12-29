@@ -6,7 +6,7 @@ import {
 
 const router = express.Router();
 
-router.post("/create", putFCMToken);
+router.post("/putFCMToken", putFCMToken);
 router.post("/send", sendNotification);
 
 export default router;

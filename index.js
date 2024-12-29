@@ -10,7 +10,7 @@ import categoryRoutes from "./routes/categoryRoutes.js";
 import reelsRoutes from "./routes/reelRoutes.js"
 import profileRoutes from"./routes/profileRoutes.js"
 import commissionRoutes from "./routes/commissionRoutes.js"
-// import
+import notificationRoutes from "./routes/notificationRoutes.js"
 
 dotenv.config();
 
@@ -33,7 +33,7 @@ app.use('/category', categoryRoutes);
 app.use('/reels', reelsRoutes);
 app.use('/profile', profileRoutes);
 app.use('/commissions', commissionRoutes);
-
+app.use('/notification', notificationRoutes);
 
 
 // Global Error Handler
