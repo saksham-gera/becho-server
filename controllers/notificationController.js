@@ -16,7 +16,7 @@ export const putFCMToken = async (req, res) => {
         res.status(200).json({ message: 'FCM token saved successfully.' });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Failed to save FCM token.' });
+        res.status(500).json({ message: `Failed to save FCM token. ${err}` });
     }
 };
 
