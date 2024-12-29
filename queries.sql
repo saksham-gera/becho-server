@@ -18,7 +18,7 @@ CREATE TABLE notifications (
 
 CREATE TABLE FCM_Token (
     fcm_token TEXT PRIMARY KEY,
-    user_id INTEGER NOT NULL
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE commissions (
