@@ -10,7 +10,7 @@ export const putFCMToken = async (req, res) => {
 
     try {
         await db.query(
-            `INSERT INTO FCM_Token (fcm_token, user_id) 
+            `INSERT INTO fcm_tokens (fcm_token, user_id) 
              VALUES ($1, $2) 
              ON CONFLICT (fcm_token) 
              DO UPDATE SET user_id = EXCLUDED.user_id`,
@@ -26,47 +26,62 @@ export const putFCMToken = async (req, res) => {
 export const sendNotification = async (req, res) => {
     const { title, description, user_id } = req.body;
 
-    if (!title || !description || !user_id) {
-        return res.status(400).json({ message: 'title, description, and user_id are required.' });
+    if (!title || !description) {
+        return res.status(400).json({ message: 'title and description are required.' });
     }
 
     try {
-        const { rows } = await db.query('SELECT fcm_token FROM FCM_Token WHERE user_id = $1', [user_id]);
+        let query;
+        let queryParams;
+
+        if (user_id) {
+            query = 'SELECT fcm_token FROM fcm_tokens WHERE user_id = $1';
+            queryParams = [user_id];
+        } else {
+            query = 'SELECT fcm_token FROM fcm_tokens';
+            queryParams = [];
+        }
+
+        const { rows } = await db.query(query, queryParams);
 
         if (!rows || rows.length === 0) {
-            return res.status(404).json({ message: 'No FCM tokens found for the user.' });
+            return res.status(404).json({ message: 'No FCM tokens found.' });
         }
 
         const tokens = rows.map(row => row.fcm_token);
-        if (tokens.length === 0) {
-            return res.status(404).json({ message: 'No valid FCM tokens available for the user.' });
-        }
 
-        const payload = {
-            notification: {
-                title,
-                body: description,
-            },
-        };
+        // Create an array to store the send promises
+        const sendPromises = tokens.map(token => {
+            const message = {
+                token: token,
+                notification: {
+                    title: title,
+                    body: description,
+                },
+            };
 
-        const response = await admin.messaging().sendToDevice(tokens, payload);
+            return admin.messaging().send(message);
+        });
 
-        // Handle invalid tokens from FCM response
+        // Wait for all the send requests to complete
+        const responses = await Promise.all(sendPromises);
+
+        // Find invalid tokens
         const invalidTokens = [];
-        response.results.forEach((result, index) => {
+        responses.forEach((result, index) => {
             if (result.error && result.error.code === 'messaging/invalid-registration-token') {
                 invalidTokens.push(tokens[index]);
             }
         });
 
         if (invalidTokens.length > 0) {
-            await db.query('DELETE FROM FCM_Token WHERE fcm_token = ANY($1)', [invalidTokens]);
+            await db.query('DELETE FROM fcm_tokens WHERE fcm_token = ANY($1)', [invalidTokens]);
         }
 
         res.status(200).json({
             message: 'Notification sent successfully.',
-            successCount: response.successCount,
-            failureCount: response.failureCount,
+            successCount: responses.filter(res => !res.error).length,
+            failureCount: responses.filter(res => res.error).length,
             invalidTokens,
         });
     } catch (err) {

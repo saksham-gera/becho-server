@@ -16,7 +16,7 @@ CREATE TABLE notifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE FCM_Token (
+CREATE TABLE fcm_tokens (
     fcm_token TEXT PRIMARY KEY,
     user_id UUID REFERENCES users(id) ON DELETE CASCADE
 );
