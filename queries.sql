@@ -16,6 +16,12 @@ CREATE TABLE notifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE FCM_Token (
+    fcm_token VARCHAR(255) NOT NULL,
+    user_id INT NOT NULL,
+    PRIMARY KEY (fcm_token)
+);
+
 CREATE TABLE commissions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
