@@ -34,3 +34,28 @@ export const getAllUsers = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+export const deleteUser = async (req, res) => {
+    const { id } = req.params;
+  
+    try {
+      const userResult = await db.query("SELECT * FROM users WHERE id=$1", [id]);
+  
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+  
+      await db.query("DELETE FROM users WHERE id=$1", [id]);
+  
+      res.status(200).json({
+        success: true,
+        message: "User deleted successfully!",
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: "Server error",
+        error: error.message,
+      });
+    }
+  };
